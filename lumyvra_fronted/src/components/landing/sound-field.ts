@@ -8,7 +8,9 @@ export type SoundField = {
 export function createSoundField(
   host: HTMLDivElement,
   onLost: () => void,
+  variant: "hero" | "login" = "hero",
 ): SoundField {
+  const login = variant === "login";
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
     antialias: false,
@@ -22,7 +24,7 @@ export function createSoundField(
   camera.position.z = 7.6;
   const mobile = host.clientWidth < 600 || navigator.hardwareConcurrency <= 4,
     around = mobile ? 250 : 420,
-    across = mobile ? 54 : 88,
+    across = mobile ? 54 : login ? 58 : 88,
     count = around * across;
   const positions = new Float32Array(count * 3),
     coords = new Float32Array(count * 2);
@@ -37,6 +39,7 @@ export function createSoundField(
   geometry.setAttribute("aCoord", new THREE.BufferAttribute(coords, 2));
   const uniforms = {
     uTime: { value: 0 },
+    uLogin: { value: login ? 1 : 0 },
     uEnergy: { value: 0 },
     uPixelRatio: { value: renderer.getPixelRatio() },
     uAspect: { value: 1 },
@@ -53,7 +56,7 @@ export function createSoundField(
     blending: THREE.AdditiveBlending,
     vertexShader: `
       attribute vec2 aCoord;
-      uniform float uTime, uEnergy, uPixelRatio, uAspect;
+      uniform float uTime, uEnergy, uPixelRatio, uAspect, uLogin;
       uniform vec2 uPointer, uBurstOrigin;
       uniform float uInfluence, uSpeed, uBurstAge;
       varying vec3 vColor;
@@ -66,6 +69,12 @@ export function createSoundField(
         float r = 1.68 + wave + cos(v) * tube;
         vec3 p = vec3(r * cos(u), r * sin(u), sin(v) * tube * .9);
         p.z += .19 * sin(u * 3.0 + t * .8);
+        // The login ribbon follows the original film's folded silhouette.
+        if (uLogin > .5) {
+          float radius = 2.12 + .30 * sin(3.0 * u + t) + .13 * cos(5.0 * u - 2.0 * t);
+          float ribbon = .56 + .11 * sin(2.0 * u - t);
+          p = vec3((radius + ribbon * cos(v)) * cos(u), (radius + ribbon * cos(v)) * sin(u), ribbon * sin(v) + .4 * sin(2.0 * u + t));
+        }
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         vec4 clip = projectionMatrix * mv;
 
@@ -94,6 +103,7 @@ export function createSoundField(
         vColor = mix(vec3(.29,.34,.28), vec3(.88,.96,.66), highlight);
         float silver = smoothstep(.2,.9,sin(u+1.5));
         vColor = mix(vColor, vec3(.78,.84,.78), silver * .58);
+        if (uLogin > .5) vColor = mix(vec3(.28,.33,.14), vec3(.86,.94,.51), highlight);
         vColor = mix(vColor, vec3(.9, 1.0, .67), min(influence * .35 + pulse * .6, .8));
         vAlpha = min(.30 + .65 * highlight + influence * .16 + pulse * .28, 1.0);
         gl_PointSize = clamp((1.55 + highlight * .7 + influence * .35) * uPixelRatio * 5.0 / -mv.z, 1.0, 4.0);
@@ -104,6 +114,10 @@ export function createSoundField(
   const sculpture = new THREE.Points(geometry, material);
   sculpture.frustumCulled = false;
   sculpture.rotation.set(0.52, -0.34, -0.4);
+  if (login) {
+    sculpture.rotation.set(.6, 0, .14);
+    sculpture.position.y = .5;
+  }
   scene.add(sculpture);
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
   let reduced = media.matches,
@@ -160,6 +174,11 @@ export function createSoundField(
       sculpture.rotation.x +=
         (0.52 + pointerY * 0.14 - sculpture.rotation.x) * 0.035;
       sculpture.rotation.z = -0.4 + Math.sin(time * 0.08) * 0.09;
+      if (login) {
+        sculpture.rotation.x = .6 + .13 * Math.sin(time * .21) + pointerY * .12;
+        sculpture.rotation.y = pointerX * .12;
+        sculpture.rotation.z = .14 + .24 * Math.sin(time * .21);
+      }
     }
     renderer.render(scene, camera);
     if (visible && !document.hidden && !paused && !reduced && !lost)
@@ -177,6 +196,7 @@ export function createSoundField(
     if (!w || !h) return;
     renderer.setSize(w, h);
     camera.aspect = w / h;
+    if (login) camera.position.z = Math.max(7.2, 7.2 / camera.aspect);
     uniforms.uAspect.value = w / h;
     camera.updateProjectionMatrix();
     refresh();

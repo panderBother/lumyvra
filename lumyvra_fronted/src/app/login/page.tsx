@@ -2,7 +2,7 @@ import { Logo } from "@/components/ui";
 import { LoginForm } from "@/components/login-form";
 import Link from "next/link";
 import { ArrowUpLeft } from "lucide-react";
-import { LoginFilm } from "@/components/login-visual";
+import { LoginVisual } from "@/components/login-visual";
 import { LandingMotionProvider } from "@/components/landing/landing-motion";
 import { ParticleVeil } from "@/components/landing/particle-veil";
 import { safeReturnPath } from "@/lib/auth-routing";
@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <LandingMotionProvider>
     <div className="login-scene">
       <section className="login-cinema" aria-label="音乐创作视觉">
-        <LoginFilm />
+        <LoginVisual />
         <div className="login-cinema-shade" />
         <Link className="login-home" href="/"><ArrowUpLeft size={17} /> 返回首页</Link>
         <div className="login-cinema-copy">

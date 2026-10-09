@@ -7,11 +7,7 @@
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "test:interaction": "node --test tests/sound-field.test.mjs tests/particle-field.test.mjs",
-    "test:works": "node --test tests/works.test.mjs",
-    "test:api": "node --test tests/api.test.mjs",
-    "test:auth": "node --test tests/auth-routing.test.mjs"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",

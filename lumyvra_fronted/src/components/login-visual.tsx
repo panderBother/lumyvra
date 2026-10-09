@@ -1,25 +1,37 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLandingMotion } from "./landing/landing-motion";
+import type { SoundField } from "./landing/sound-field";
 
-export function LoginFilm() {
-  const video = useRef<HTMLVideoElement>(null);
+export function LoginVisual() {
+  const host = useRef<HTMLDivElement>(null);
+  const field = useRef<SoundField | null>(null);
+  const [ready, setReady] = useState(false);
   const { paused } = useLandingMotion();
   useEffect(() => {
-    const el = video.current;
+    const el = host.current;
     if (!el) return;
-    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => {
-      if (paused || preference.matches || document.hidden) el.pause();
-      else void el.play().catch(() => {});
+    let disposed = false;
+    import("./landing/sound-field").then(({ createSoundField }) => {
+      if (disposed) return;
+      try {
+        field.current = createSoundField(el, () => {
+          if (!disposed) setReady(false);
+        }, "login");
+        setReady(true);
+      } catch {
+        setReady(false);
+      }
+    }).catch(() => { if (!disposed) setReady(false); });
+    return () => {
+      disposed = true;
+      field.current?.dispose();
+      field.current = null;
     };
-    sync();
-    document.addEventListener("visibilitychange", sync);
-    preference.addEventListener("change", sync);
-    return () => { el.pause(); document.removeEventListener("visibilitychange", sync); preference.removeEventListener("change", sync); };
-  }, [paused]);
-  return <video ref={video} className="login-film" muted loop playsInline preload="metadata"
-    poster="/media/lumyvra-sound-bloom-poster.webp" aria-label="黄绿色声波粒子雕塑循环视频">
-    <source src="/media/lumyvra-sound-bloom.mp4" type="video/mp4" />
-  </video>;
+  }, []);
+  useEffect(() => { field.current?.setPaused(paused); }, [paused, ready]);
+  return <div className={`login-visual ${ready ? "is-ready" : ""}`} aria-hidden="true">
+    <div className="login-visual-fallback" />
+    <div ref={host} className="login-particle-surface" />
+  </div>;
 }
