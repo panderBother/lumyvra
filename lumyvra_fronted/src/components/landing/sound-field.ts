@@ -196,7 +196,15 @@ export function createSoundField(
     if (!w || !h) return;
     renderer.setSize(w, h);
     camera.aspect = w / h;
-    if (login) camera.position.z = Math.max(7.2, 7.2 / camera.aspect);
+    // Fit the entire ribbon with breathing room on both portrait and landscape panels.
+    if (login) {
+      camera.position.z = Math.max(10.8, 10.8 / camera.aspect);
+      // A previous viewport's gesture must not stretch the newly fitted composition.
+      cancel();
+      uniforms.uInfluence.value = 0;
+      uniforms.uSpeed.value = 0;
+      uniforms.uBurstAge.value = 10;
+    }
     uniforms.uAspect.value = w / h;
     camera.updateProjectionMatrix();
     refresh();

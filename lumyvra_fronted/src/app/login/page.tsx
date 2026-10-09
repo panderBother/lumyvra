@@ -12,9 +12,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <LandingMotionProvider>
     <div className="login-scene">
+      <ParticleVeil variant="stars" />
       <section className="login-cinema" aria-label="音乐创作视觉">
         <LoginVisual />
-        <div className="login-cinema-shade" />
         <Link className="login-home" href="/"><ArrowUpLeft size={17} /> 返回首页</Link>
         <div className="login-cinema-copy">
           <p>每一个声音，都有它的形状。</p>
@@ -27,7 +27,6 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </div>
       </section>
       <div className="login-form-side">
-        <ParticleVeil variant="stars" />
         <section className="auth-card panel">
           <Logo />
           <h1>让灵感，从这里开始。</h1>

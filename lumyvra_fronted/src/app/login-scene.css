@@ -1,10 +1,10 @@
 .site-frame.login-frame { min-height: 100svh; }
 .login-frame #main-content { min-height: 100svh; }
-.login-scene { display: grid; grid-template-columns: 53% 47%; min-height: 100svh; background: #10110f; }
-.login-cinema { position: relative; min-height: 100svh; overflow: hidden; isolation: isolate; background: #10160e; border-right: 1px solid #ffffff10; }
+.login-scene { position: relative; isolation: isolate; display: grid; grid-template-columns: 53% 47%; min-height: 100svh; background: radial-gradient(ellipse at 24% 36%, #b6cc6020 0%, transparent 48%), radial-gradient(ellipse at 77% 48%, #b6cc6012 0%, transparent 52%), radial-gradient(ellipse at 52% 0%, #8a9f5510 0%, transparent 60%), #10130e; }
+.login-scene > .particle-veil { z-index: 0; }
+.login-cinema { position: relative; z-index: 1; min-height: 100svh; overflow: hidden; isolation: isolate; }
 .login-visual, .login-visual-fallback, .login-particle-surface { position: absolute; inset: 0; }
-.login-visual { background: radial-gradient(ellipse at 51% 40%, #1a2112 0%, #0c130b 72%); }
-.login-visual-fallback { background: url('/media/lumyvra-sound-bloom-poster.webp') center 42% / cover no-repeat; transition: opacity .5s; }
+.login-visual-fallback { background: url('/media/lumyvra-sound-bloom-poster.webp') center 38% / 76% auto no-repeat; mix-blend-mode: screen; mask-image: radial-gradient(ellipse 48% 44% at 50% 43%, #000 35%, transparent 100%); transition: opacity .5s; }
 .login-particle-surface { opacity: 0; touch-action: pan-y; cursor: grab; }
 .login-particle-surface canvas { display: block; width: 100%; height: 100%; }
 .login-visual.is-ready .login-particle-surface { opacity: 1; }
@@ -14,15 +14,13 @@
   .login-visual-fallback { transition: none; }
   .login-particle-surface { cursor: default; }
 }
-.login-cinema-shade { position: absolute; inset: 0; background: linear-gradient(0deg,#0c130bed,transparent 55%); pointer-events: none; }
 .login-home { position: absolute; left: clamp(24px,3.5vw,64px); top: 32px; z-index: 2; display: inline-flex; gap: 10px; align-items: center; color: #d8dfc9; font-size: 13px; }
 .login-home:hover { color: #e0f298; }
 .login-cinema-copy { position: absolute; left: clamp(28px,4.5vw,84px); right: 30px; bottom: 116px; z-index: 1; pointer-events: none; }
 .login-cinema-copy > p { color: #c0cba9; font-size: 14px; letter-spacing: .035em; margin-bottom: 22px; }
 .login-cinema-copy h2 { font-size: clamp(36px,4vw,68px); font-weight: 450; line-height: 1.4; letter-spacing: -.025em; color: #f0f2e6; }
 .login-cinema-copy > span { display: block; margin-top: 28px; color: #aab79a; font-size: 12px; }
-.login-form-side { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center; min-width: 0; padding: 60px clamp(28px,4vw,90px); overflow: hidden; }
-.login-form-side > .particle-veil { z-index: 0; }
+.login-form-side { position: relative; z-index: 1; isolation: isolate; display: flex; align-items: center; justify-content: center; min-width: 0; padding: 60px clamp(28px,4vw,90px); }
 .login-scene .auth-card { position: relative; z-index: 1; width: 100%; max-width: 450px; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
 .login-scene .auth-card > .logo { display: inline-flex; margin-bottom: 48px; font-size: 30px; }
 .login-scene .auth-card h1 { font-size: clamp(24px,2.1vw,34px); font-weight: 500; letter-spacing: -.025em; line-height: 1.45; margin-bottom: 12px; }
@@ -67,7 +65,7 @@
 }
 @media (max-width: 760px) {
   .login-scene { grid-template-columns: 1fr; }
-  .login-cinema { min-height: 340px; border-right: 0; border-bottom: 1px solid #ffffff10; }
+  .login-cinema { min-height: 340px; }
   .login-visual-fallback { background-position: center 32%; }
   .login-home { top: 22px; left: 24px; font-size: 12px; }
   .login-cinema-copy { left: 24px; bottom: 30px; right: 20px; }
