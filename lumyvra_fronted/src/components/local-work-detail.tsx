@@ -1,0 +1,273 @@
+"use client";
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowUpRight, Check, Send, Save, Pencil } from "lucide-react";
+import { useWorks } from "@/lib/use-works";
+import {
+  editWork,
+  publishWork,
+  modes,
+  workDuration,
+  type Work,
+} from "@/lib/works";
+import { coverUrl } from "@/lib/music";
+
+export function LocalWorkDetail({ id }: { id: string }) {
+  const { works, loaded, error } = useWorks();
+  if (!loaded)
+    return (
+      <div className="container page-space">
+        <p role="status">正在读取作品…</p>
+      </div>
+    );
+  const work = works.find((w) => w.id === id);
+  if (!work || error)
+    return (
+      <div className="container page-space empty-state">
+        <h1>暂时找不到这份作品</h1>
+        <p>{error || "作品保存在创建它的浏览器中，请返回个人中心查看。"}</p>
+        <Link className="button secondary" href="/profile?tab=drafts">
+          回到草稿箱
+        </Link>
+      </div>
+    );
+  return <WorkDetail key={work.id} work={work} />;
+}
+function WorkDetail({ work }: { work: Work }) {
+  const [title, setTitle] = useState(work.title);
+  const [description, setDescription] = useState(work.description);
+  const [allowRemix, setAllowRemix] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const published = work.status === "published";
+  function save() {
+    try {
+      editWork(work.id, title, description);
+      setError("");
+      setMessage("草稿已保存，可在个人中心继续查看。");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "保存失败，请重试。");
+    }
+  }
+  function publish() {
+    try {
+      publishWork(work.id, title, description, allowRemix);
+      setError("");
+      setMessage("作品已在本地演示中发布。");
+      setPublishing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "发布失败，草稿仍已保留。");
+    }
+  }
+  return (
+    <div className="container page-space local-result">
+      <header className="collection-heading">
+        <div className="page-heading">
+          <span className="eyebrow">{published ? "我的作品" : "创作草稿"}</span>
+          <h1>
+            {published
+              ? "让这首歌，被听见。"
+              : work.ready
+                ? "作品已就绪，给它一个名字。"
+                : "灵感已保存，随时继续。"}
+          </h1>
+          <p>本地演示 · 未接入真实音乐生成、音频或公开发布服务。</p>
+        </div>
+        <Link
+          className="text-cta"
+          href={`/profile?tab=${published ? "works" : "drafts"}`}
+        >
+          回到{published ? "我的作品" : "草稿箱"} <ArrowUpRight size={17} />
+        </Link>
+      </header>
+      <div className="local-result-grid">
+        <section>
+          <div className="local-work-overview">
+            <div className="local-work-art">
+              <Image
+                src={coverUrl(work.cover)}
+                alt={work.title}
+                fill
+                quality={90}
+                sizes="(max-width:760px) 40vw, 280px"
+              />
+            </div>
+            <div>
+              <span
+                className={`work-status ${published ? "is-published" : ""}`}
+              >
+                {published
+                  ? "已发布 · 本地"
+                  : work.ready
+                    ? "草稿 · 未发布"
+                    : "草稿 · 待生成"}
+              </span>
+              <h2>{work.title}</h2>
+              <p>
+                {work.genre} / {work.mood} / {modes[work.mode]}
+              </p>
+              <p>目标时长 {workDuration(work.seconds)}</p>
+              {work.sourceTitle && <p>灵感来源：{work.sourceTitle}</p>}
+              <p className="muted">
+                {!work.ready
+                  ? "灵感已保存，完成生成后可预览并发布。"
+                  : work.mode === "lyrics"
+                    ? "保留你输入的歌词"
+                    : "以下为演示歌词，尚未生成真实歌曲"}
+              </p>
+            </div>
+          </div>
+          {work.ready ? (
+            <section className="lyrics-panel panel">
+              <h2>歌词{work.mode === "lyrics" ? "" : "示例"}</h2>
+              <p className="preserve-lines">{work.lyrics}</p>
+            </section>
+          ) : (
+            <section className="lyrics-panel panel">
+              <h2>等待生成</h2>
+              <p>
+                这份草稿保存了你的灵感和创作参数。点击「继续创作」完成演示生成后，再为作品命名并发布。
+              </p>
+            </section>
+          )}
+          <details className="work-prompt-detail" open>
+            <summary>这次创作的灵感</summary>
+            <p className="preserve-lines">{work.prompt}</p>
+          </details>
+        </section>
+        <aside className="publication-panel panel">
+          {published ? (
+            <>
+              <Check size={28} />
+              <h2>作品已发布</h2>
+              <p>{work.description || "还没有添加作品介绍。"}</p>
+              <div className="publication-note">
+                {work.allowRemix
+                  ? "已允许做同款：这份作品会出现在创作灵感中。"
+                  : "未开放做同款：作品仅展示在作品广场，不进入灵感页。"}
+              </div>
+              <Link className="button gradient" href="/community">
+                查看作品广场 <ArrowUpRight size={16} />
+              </Link>
+              {work.allowRemix && (
+                <Link
+                  className="button secondary"
+                  href={`/create?remix=${work.id}`}
+                >
+                  做一个新版本
+                </Link>
+              )}
+              <Link className="text-cta" href="/promo">
+                浏览创作灵感 <ArrowUpRight size={16} />
+              </Link>
+            </>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (publishing) publish();
+                else save();
+              }}
+            >
+              <h2>{publishing ? "发布你的作品" : "作品信息"}</h2>
+              <label>
+                作品名称
+                <input
+                  required
+                  maxLength={40}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="给这段旋律起个名字"
+                />
+              </label>
+              <label>
+                作品介绍
+                <textarea
+                  maxLength={240}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="聊聊这首歌背后的故事（选填）"
+                  rows={4}
+                />
+              </label>
+              {publishing ? (
+                <>
+                  <label className="remix-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={allowRemix}
+                      onChange={(e) => setAllowRemix(e.target.checked)}
+                    />
+                    <span>
+                      <strong>允许其他人做同款</strong>
+                      <small>
+                        开启后，作品会进入创作灵感页，并展示你的提示词、风格和情绪，供他人套用。
+                      </small>
+                    </span>
+                  </label>
+                  <p className="publication-note">
+                    发布后显示在本地作品广场。当前仅此浏览器可见，不会上传到服务器。
+                  </p>
+                  <button className="button gradient" type="submit">
+                    <Send size={16} />
+                    确认发布
+                  </button>
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={() => setPublishing(false)}
+                  >
+                    暂不发布
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="button secondary" type="submit">
+                    <Save size={16} />
+                    保存草稿
+                  </button>
+                  {work.ready ? (
+                    <button
+                      type="button"
+                      className="button gradient"
+                      onClick={() => {
+                        setError("");
+                        setPublishing(true);
+                      }}
+                    >
+                      <Send size={16} />
+                      发布作品
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/create?draft=${work.id}`}
+                      className="button gradient"
+                    >
+                      继续创作
+                    </Link>
+                  )}
+                  <Link href={`/create?draft=${work.id}`} className="text-cta">
+                    <Pencil size={15} />
+                    修改灵感并重新生成
+                  </Link>
+                </>
+              )}
+            </form>
+          )}
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+          {message && (
+            <p className="saved-message" role="status">
+              {message}
+            </p>
+          )}
+        </aside>
+      </div>
+    </div>
+  );
+}
