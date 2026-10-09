@@ -12,3 +12,22 @@ Thumbs.db
 *.key
 *.p12
 *.pfx
+lumyvra_backend/data/
+lumyvra_backend/bin/
+*.db
+*.db-shm
+*.db-wal
+
+# Local credentials; only sanitized .env.example files belong in Git.
+client_secret*.json
+credentials*.json
+service-account*.json
+
+# Keep project notes and tests local.
+*.md
+docs/
+tests/
+__tests__/
+*_test.go
+*.test.*
+*.spec.*

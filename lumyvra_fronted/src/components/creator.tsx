@@ -3,7 +3,10 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Music2, Clock3, Sparkles, WandSparkles } from "lucide-react";
 import { tracks } from "@/lib/music";
-import { saveDraft, type WorkMode } from "@/lib/works";
+import { type WorkMode } from "@/lib/works";
+import { saveDraft, generateWork } from "@/lib/server-works";
+import { useUser } from "@/lib/use-api";
+import Link from "next/link";
 import { InspirationGallery } from "./inspiration-gallery";
 const modes = [
   { id: "text", label: "文生音乐" },
@@ -32,6 +35,8 @@ export function Creator({
   sourceTitle?: string;
 }) {
   const router = useRouter();
+  const { user } = useUser();
+  const savedId = useRef(draftId);
   const [mode, setMode] = useState(initialMode);
   const [prompt, setPrompt] = useState(initialPrompt);
   const [genre, setGenre] = useState(initialGenre);
@@ -47,8 +52,9 @@ export function Creator({
   const generating = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  function generate(startGeneration = true) {
+  async function generate(startGeneration = true) {
     if (generating.current) return;
+    if (!user) { setError("请先登录，草稿将保存到你的账号。"); return; }
     if (!prompt.trim()) {
       setError("先写下一点灵感吧，让音乐有一个开始。");
       return;
@@ -62,7 +68,7 @@ export function Creator({
           : duration === "30秒"
             ? 30
             : parseInt(duration) * 60;
-      const work = saveDraft(
+      const work = await saveDraft(
         {
           prompt,
           mode: mode as WorkMode,
@@ -73,9 +79,11 @@ export function Creator({
           sourceId,
           sourceTitle,
         },
-        draftId,
+        savedId.current,
         startGeneration,
       );
+      savedId.current = work.id;
+      if (startGeneration) await generateWork(work.id);
       router.push(
         startGeneration
           ? `/create/progress?mode=${mode}&id=${encodeURIComponent(work.id)}`
@@ -90,6 +98,7 @@ export function Creator({
   return (
     <div className="creator-columns">
       <section className="creator-form panel">
+        {!user && <p className="remix-source">登录后可保存草稿、生成和发布作品。<Link href="/login" target="_blank" rel="noopener noreferrer">去登录（新标签页） →</Link></p>}
         {sourceTitle && (
           <p className="remix-source">
             灵感来自「{sourceTitle}」 · 修改下面的内容，创作你的版本。
@@ -261,7 +270,7 @@ export function Creator({
           先保存草稿，稍后创作
         </button>
         <p className="generation-note">
-          <Clock3 size={14} /> 演示生成约需 8 秒 <span>· 当前为演示模式</span>
+          <Clock3 size={14} /> 演示生成由后端处理 <span>· 不生成真实音频</span>
         </p>
       </section>
       <aside className="inspiration panel">

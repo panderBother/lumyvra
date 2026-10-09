@@ -9,6 +9,10 @@ export const modes = {
 } as const;
 export type WorkMode = keyof typeof modes;
 export type Work = {
+  ownerId?: string;
+  artist?: string;
+  generationMode?: "demo" | "sample" | "live";
+  audioUrl?: string;
   id: string;
   title: string;
   description: string;
@@ -78,6 +82,8 @@ export function parseWorks(raw: string | null): Work[] {
   return data.works;
 }
 
+// Legacy browser-only persistence retained for old data and its regression tests.
+// Active UI mutations use server-works.ts; do not silently upload legacy drafts.
 function read() {
   try {
     return parseWorks(window.localStorage.getItem(WORKS_KEY));

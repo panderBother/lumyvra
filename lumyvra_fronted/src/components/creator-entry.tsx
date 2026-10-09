@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
 import { Creator } from "./creator";
-import { useWorks } from "@/lib/use-works";
+import { useWork } from "@/lib/use-works";
 import { inspirations } from "@/lib/inspiration";
-import { remixableWorks } from "@/lib/works";
 export function CreatorEntry({
   mode,
   prompt,
@@ -21,9 +20,9 @@ export function CreatorEntry({
   genre?: string;
   mood?: string;
 }) {
-  const { works, loaded, error } = useWorks();
+  const { work, loaded, error } = useWork(draft || remix);
   if ((remix || draft) && !loaded)
-    return <p role="status">正在读取本地作品…</p>;
+    return <p role="status">正在读取账号作品…</p>;
   if ((remix || draft) && error)
     return (
       <p className="form-error" role="alert">
@@ -31,15 +30,15 @@ export function CreatorEntry({
       </p>
     );
   const source = draft
-    ? works.find((w) => w.id === draft && w.status === "draft")
+    ? (work?.status === "draft" ? work : undefined)
     : remix
-      ? remixableWorks(works).find((w) => w.id === remix)
+      ? (work?.status === "published" && work.allowRemix ? work : undefined)
       : inspirations.find((i) => i.id === template);
   if ((remix || draft || template) && !source)
     return (
       <div className="empty-state">
         <p>
-          这份草稿或灵感不可用，可能尚未开放做同款，或保存在另一个浏览器中。
+          这份草稿或灵感不可用，请确认已登录正确账号，且来源作品开放了做同款。
         </p>
         <Link href="/promo" className="button secondary">
           重新选择灵感

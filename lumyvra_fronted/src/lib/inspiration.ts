@@ -33,7 +33,7 @@ export const inspirations: Inspiration[] = tracks.map((t, i) => ({
 export function workInspiration(w: Work): Inspiration {
   return {
     ...w,
-    artist: "我 · 本地演示",
+    artist: w.artist || "音乐人",
     local: true,
     description: w.description || "从这段创作出发，写下你的版本。",
   };

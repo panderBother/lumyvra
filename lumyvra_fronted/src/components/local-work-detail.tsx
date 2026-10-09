@@ -3,10 +3,11 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Check, Send, Save, Pencil } from "lucide-react";
-import { useWorks } from "@/lib/use-works";
+import { useWork } from "@/lib/use-works";
+import { useUser } from "@/lib/use-api";
+import { editWork, publishWork } from "@/lib/server-works";
+import { FavoriteButton } from "./favorite-button";
 import {
-  editWork,
-  publishWork,
   modes,
   workDuration,
   type Work,
@@ -14,19 +15,18 @@ import {
 import { coverUrl } from "@/lib/music";
 
 export function LocalWorkDetail({ id }: { id: string }) {
-  const { works, loaded, error } = useWorks();
+  const { work, loaded, error } = useWork(id);
   if (!loaded)
     return (
       <div className="container page-space">
         <p role="status">正在读取作品…</p>
       </div>
     );
-  const work = works.find((w) => w.id === id);
   if (!work || error)
     return (
       <div className="container page-space empty-state">
         <h1>暂时找不到这份作品</h1>
-        <p>{error || "作品保存在创建它的浏览器中，请返回个人中心查看。"}</p>
+        <p>{error || "请确认作品已发布，或登录创建草稿的账号。"}</p>
         <Link className="button secondary" href="/profile?tab=drafts">
           回到草稿箱
         </Link>
@@ -35,6 +35,9 @@ export function LocalWorkDetail({ id }: { id: string }) {
   return <WorkDetail key={work.id} work={work} />;
 }
 function WorkDetail({ work }: { work: Work }) {
+  const { user } = useUser();
+  const own = user?.id === work.ownerId;
+  const [busy, setBusy] = useState(false);
   const [title, setTitle] = useState(work.title);
   const [description, setDescription] = useState(work.description);
   const [allowRemix, setAllowRemix] = useState(false);
@@ -42,30 +45,34 @@ function WorkDetail({ work }: { work: Work }) {
   const [message, setMessage] = useState("");
   const [publishing, setPublishing] = useState(false);
   const published = work.status === "published";
-  function save() {
+  async function save() {
+    if (busy) return;
+    setBusy(true);
     try {
-      editWork(work.id, title, description);
+      await editWork(work.id, title, description);
       setError("");
       setMessage("草稿已保存，可在个人中心继续查看。");
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存失败，请重试。");
-    }
+    } finally { setBusy(false); }
   }
-  function publish() {
+  async function publish() {
+    if (busy) return;
+    setBusy(true);
     try {
-      publishWork(work.id, title, description, allowRemix);
+      await publishWork(work.id, title, description, allowRemix);
       setError("");
-      setMessage("作品已在本地演示中发布。");
+      setMessage("作品已发布，其他用户现在可以在广场查看。");
       setPublishing(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "发布失败，草稿仍已保留。");
-    }
+    } finally { setBusy(false); }
   }
   return (
     <div className="container page-space local-result">
       <header className="collection-heading">
         <div className="page-heading">
-          <span className="eyebrow">{published ? "我的作品" : "创作草稿"}</span>
+          <span className="eyebrow">{published ? "音乐作品" : "创作草稿"}</span>
           <h1>
             {published
               ? "让这首歌，被听见。"
@@ -73,7 +80,7 @@ function WorkDetail({ work }: { work: Work }) {
                 ? "作品已就绪，给它一个名字。"
                 : "灵感已保存，随时继续。"}
           </h1>
-          <p>本地演示 · 未接入真实音乐生成、音频或公开发布服务。</p>
+          <p>{work.generationMode === "live" ? "作品与生成结果已保存到服务器。" : "演示生成 · 作品已保存到服务器，尚未生成真实音频。"}</p>
         </div>
         <Link
           className="text-cta"
@@ -99,12 +106,14 @@ function WorkDetail({ work }: { work: Work }) {
                 className={`work-status ${published ? "is-published" : ""}`}
               >
                 {published
-                  ? "已发布 · 本地"
+                  ? "已发布"
                   : work.ready
                     ? "草稿 · 未发布"
                     : "草稿 · 待生成"}
               </span>
               <h2>{work.title}</h2>
+              <p>创作者：{work.artist || "音乐人"}</p>
+              {published && <FavoriteButton id={work.id} />}
               <p>
                 {work.genre} / {work.mood} / {modes[work.mode]}
               </p>
@@ -130,12 +139,13 @@ function WorkDetail({ work }: { work: Work }) {
               <p>
                 这份草稿保存了你的灵感和创作参数。点击「继续创作」完成演示生成后，再为作品命名并发布。
               </p>
+              <Link href={`/create/progress?id=${work.id}&mode=${work.mode}`} className="text-cta">查看生成任务状态 →</Link>
             </section>
           )}
-          <details className="work-prompt-detail" open>
+          {work.prompt && <details className="work-prompt-detail" open>
             <summary>这次创作的灵感</summary>
             <p className="preserve-lines">{work.prompt}</p>
-          </details>
+          </details>}
         </section>
         <aside className="publication-panel panel">
           {published ? (
@@ -208,9 +218,9 @@ function WorkDetail({ work }: { work: Work }) {
                     </span>
                   </label>
                   <p className="publication-note">
-                    发布后显示在本地作品广场。当前仅此浏览器可见，不会上传到服务器。
+                    发布后所有用户都能在作品广场查看。勾选做同款会同时公开你的提示词。
                   </p>
-                  <button className="button gradient" type="submit">
+                  <button className="button gradient" type="submit" disabled={busy || !own}>
                     <Send size={16} />
                     确认发布
                   </button>
@@ -224,7 +234,7 @@ function WorkDetail({ work }: { work: Work }) {
                 </>
               ) : (
                 <>
-                  <button className="button secondary" type="submit">
+                  <button className="button secondary" type="submit" disabled={busy || !own}>
                     <Save size={16} />
                     保存草稿
                   </button>

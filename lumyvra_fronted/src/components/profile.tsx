@@ -15,13 +15,20 @@ import {
   Check,
 } from "lucide-react";
 import { useWorks } from "@/lib/use-works";
+import { useUser } from "@/lib/use-api";
+import { api, refreshData } from "@/lib/api";
 import { LocalLibrary } from "./local-library";
 export function Profile({ initialTab = "works" }: { initialTab?: string }) {
   const [tab, setTab] = useState(initialTab);
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState("Luna");
-  const [draft, setDraft] = useState(name);
-  const { works } = useWorks();
+  const { user, loaded, error } = useUser();
+  const name = user?.name || "音乐人";
+  const [draft, setDraft] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const { works } = useWorks("mine");
+  if (!loaded) return <p role="status">正在读取账号…</p>;
+  if (!user) return <div className="panel empty-state"><h1>登录，保存你的音乐故事。</h1><p>{error || "草稿、发布和收藏都会保存在你的账号中。"}</p><Link href="/login" className="button gradient">登录 / 注册</Link></div>;
   return (
     <div className="profile-workspace">
       <div className="library-heading">
@@ -40,7 +47,7 @@ export function Profile({ initialTab = "works" }: { initialTab?: string }) {
         <div className="profile-summary">
           <h1>{name}</h1>
           <p>
-            ID: 12345678 <span className="demo-label">演示账号</span>
+            ID: {user.id.slice(-12)} <span className="demo-label">{user.email}</span>
           </p>
           <div className="profile-stats">
             {[
@@ -81,10 +88,13 @@ export function Profile({ initialTab = "works" }: { initialTab?: string }) {
       {editing && (
         <form
           className="panel edit-form"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            setName(draft.trim() || "Luna");
-            setEditing(false);
+            if (busy) return;
+            setBusy(true); setMessage("");
+            try { await api("/me", { method: "PATCH", body: JSON.stringify({ name: draft }) }); refreshData(); setEditing(false); }
+            catch (err) { setMessage(err instanceof Error ? err.message : "保存失败"); }
+            finally { setBusy(false); }
           }}
         >
           <label>
@@ -96,7 +106,7 @@ export function Profile({ initialTab = "works" }: { initialTab?: string }) {
               required
             />
           </label>
-          <button className="button gradient small" type="submit">
+          <button className="button gradient small" type="submit" disabled={busy}>
             <Check size={14} />
             保存
           </button>
@@ -110,6 +120,7 @@ export function Profile({ initialTab = "works" }: { initialTab?: string }) {
           </button>
         </form>
       )}
+      {message && <p role="alert" className="form-error">{message}</p>}
       <div className="account-navigation">
         <nav className="account-sections" aria-label="个人中心栏目">
           {[
@@ -154,15 +165,7 @@ export function Profile({ initialTab = "works" }: { initialTab?: string }) {
                   ? "账号设置"
                   : "我的作品"}
         </h2>
-        {tab === "favorites" ? (
-          <div className="panel empty-state">
-            <Star size={30} />
-            <p>还没有收藏的作品</p>
-            <Link href="/community" className="button gradient">
-              去发现喜欢的音乐
-            </Link>
-          </div>
-        ) : tab === "settings" ? (
+        {tab === "settings" ? (
           <div className="panel settings-panel">
             <h3>个人资料</h3>
             <p>当前昵称：{name}</p>
@@ -175,10 +178,13 @@ export function Profile({ initialTab = "works" }: { initialTab?: string }) {
             >
               修改昵称
             </button>
-            <p className="muted">静态演示账号，修改仅在当前页面生效。</p>
-            <Link className="subtle-link" href="/login">
-              前往登录页面 →
-            </Link>
+            <p className="muted">账号资料与作品已保存在服务器。旧版浏览器草稿仍保留在本地，未自动上传。</p>
+            <button className="button secondary" disabled={busy} onClick={async () => {
+              setBusy(true); setMessage("");
+              try { await api("/auth/logout", { method: "POST" }); refreshData(); }
+              catch (err) { setMessage(err instanceof Error ? err.message : "退出失败"); }
+              finally { setBusy(false); }
+            }}>退出登录</button>
           </div>
         ) : (
           <LocalLibrary tab={tab} key={tab} />

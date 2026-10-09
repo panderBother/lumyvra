@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
-import { Navigation } from "@/components/navigation";
+import { SiteShell } from "@/components/site-shell";
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/noto-sans-sc";
 import "./globals.css";
 import "./music-landing.css";
 import "./studio-theme.css";
 import "./campaign.css";
+import "./login-scene.css";
 export const metadata: Metadata = {
   title: { default: "Lumyvra · 让灵感成为音乐", template: "%s · Lumyvra" },
   description:
@@ -23,20 +23,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           跳转到内容
         </a>
-        <div className="site-frame">
-          <Navigation />
-          <main id="main-content">{children}</main>
-        </div>
-        <footer className="site-footer">
-          <span className="footer-brand">
-            Lumyvra <span>让每一份灵感，都有自己的声音。</span>
-          </span>
-          <div>
-            <Link href="/about">关于我们</Link>
-            <Link href="/help">帮助中心</Link>
-            <span>© {new Date().getFullYear()} Lumyvra</span>
-          </div>
-        </footer>
+        <SiteShell year={new Date().getFullYear()}>{children}</SiteShell>
       </body>
     </html>
   );

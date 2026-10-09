@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Search, Menu, X, UserRound, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "./ui";
+import { useUser } from "@/lib/use-api";
 
 const links = [
   ["/", "首页"],
@@ -15,6 +16,7 @@ const links = [
 ];
 export function Navigation() {
   const path = usePathname();
+  const { user } = useUser();
   const [open, setOpen] = useState(false);
   return (
     <header className="site-header">
@@ -44,9 +46,12 @@ export function Navigation() {
           <Link href="/create" className="button small member-button">
             <Sparkles size={14} /> 开启创作
           </Link>
-          <Link href="/profile" className="avatar" aria-label="个人中心">
+          {user ? <Link href="/profile" className="avatar" aria-label="个人中心">
             <UserRound size={18} />
-          </Link>
+          </Link> : <div className="nav-auth-actions">
+            <Link href="/login" className="nav-login">登录</Link>
+            <Link href="/login?mode=register" className="button small nav-register">注册</Link>
+          </div>}
           <button
             className="icon-button mobile-menu"
             onClick={() => setOpen(!open)}

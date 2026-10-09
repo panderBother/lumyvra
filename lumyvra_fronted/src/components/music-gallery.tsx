@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { Headphones, Heart, Search } from "lucide-react";
+import { Headphones, Search } from "lucide-react";
 import { tracks } from "@/lib/music";
 import { TrackArtwork } from "./ui";
 import { PublishedWorks } from "./local-library";
 import { useWorks } from "@/lib/use-works";
+import { FavoriteButton } from "./favorite-button";
 import { searchPublishedWorks } from "@/lib/works";
 
 export function MusicGallery({
@@ -18,24 +19,24 @@ export function MusicGallery({
   const [filter, setFilter] = useState("推荐");
   const [tab, setTab] = useState("推荐");
   const [query, setQuery] = useState(initialQuery);
-  const [liked, setLiked] = useState<string[]>([]);
+  const { works: favoriteWorks } = useWorks("favorites");
+  const liked = favoriteWorks.map(w => w.id);
   const { works, loaded } = useWorks();
   const hasLocalResults =
     community &&
-    tab !== "关注" &&
-    searchPublishedWorks(works, query).length > 0;
+    searchPublishedWorks(tab === "收藏" ? favoriteWorks : works, query).length > 0;
   const normalizedQuery = query.trim().toLocaleLowerCase();
   const categories = community
-    ? ["推荐", "最新", "最热", "关注"]
+    ? ["推荐", "最新", "最热", "收藏"]
     : ["推荐", "流行", "民谣", "电子", "古风", "轻音乐"];
-  const visible = tracks.filter(
+  const visible = (tab === "收藏" && community ? [] : tracks).filter(
     (t) =>
       (!normalizedQuery ||
         `${t.title}${t.artist}${t.genre}${t.mood}`
           .toLocaleLowerCase()
           .includes(normalizedQuery)) &&
       (community
-        ? tab !== "关注" || liked.includes(t.id)
+        ? tab !== "收藏" || liked.includes(t.id)
         : filter === "推荐" || t.genre === filter),
   );
   const ordered =
@@ -81,7 +82,7 @@ export function MusicGallery({
           </Link>
         )}
       </div>
-      {community && tab !== "关注" && <PublishedWorks query={query} />}
+      {community && <PublishedWorks query={query} favorites={tab === "收藏"} />}
       <div className={community ? "track-grid community-grid" : "track-grid"}>
         {ordered.map((t) => (
           <article className="track-card" key={t.id}>
@@ -95,25 +96,7 @@ export function MusicGallery({
               <Link href={`/player/${t.id}`}>
                 <h3>{t.title}</h3>
               </Link>
-              {community && (
-                <button
-                  className={`like-button ${liked.includes(t.id) ? "liked" : ""}`}
-                  aria-label={`收藏 ${t.title}`}
-                  aria-pressed={liked.includes(t.id)}
-                  onClick={() =>
-                    setLiked(
-                      liked.includes(t.id)
-                        ? liked.filter((id) => id !== t.id)
-                        : [...liked, t.id],
-                    )
-                  }
-                >
-                  <Heart
-                    size={16}
-                    fill={liked.includes(t.id) ? "currentColor" : "none"}
-                  />
-                </button>
-              )}
+              {community && <FavoriteButton id={t.id} />}
             </div>
             {community && (
               <p className="track-genre">
@@ -139,9 +122,9 @@ export function MusicGallery({
       </div>
       {ordered.length === 0 &&
         !hasLocalResults &&
-        (!community || loaded || tab === "关注") && (
+        (!community || loaded || tab === "收藏") && (
           <div className="empty-state">
-            {tab === "关注"
+            {tab === "收藏"
               ? "点击作品旁的爱心，将喜欢的作品加入这里。"
               : "没有找到相关作品，试试其他关键词或风格。"}
           </div>

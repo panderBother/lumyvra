@@ -8,7 +8,7 @@ import { remixableWorks } from "@/lib/works";
 import { useWorks } from "@/lib/use-works";
 import { coverUrl } from "@/lib/music";
 export function InspirationGallery({ compact = false }: { compact?: boolean }) {
-  const { works, error } = useWorks();
+  const { works, error } = useWorks("inspirations");
   const [category, setCategory] = useState("全部");
   const [query, setQuery] = useState("");
   const items = [
@@ -96,7 +96,7 @@ export function InspirationGallery({ compact = false }: { compact?: boolean }) {
               </Link>
               <div className="inspiration-card-heading">
                 <h2>{i.title}</h2>
-                <span>{i.local ? "社区灵感 · 本地" : "精选示例"}</span>
+                <span>{i.local ? "社区灵感" : "精选示例"}</span>
               </div>
               <p className="inspiration-description">{i.description}</p>
               <div className="small-tags">

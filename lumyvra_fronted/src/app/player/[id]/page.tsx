@@ -45,7 +45,7 @@ export default async function Player({
           <ArrowLeft />
         </Link>
         <span>正在聆听 · {track.genre}</span>
-        <Link href="/result" className="icon-button" aria-label="作品信息">
+        <Link href={`/result?id=${id}`} className="icon-button" aria-label="作品信息">
           <Expand size={20} />
         </Link>
       </div>
@@ -68,7 +68,7 @@ export default async function Player({
           )}
         </div>
         <Playback large />
-        <TrackActions />
+        <TrackActions id={id} />
       </div>
     </div>
   );

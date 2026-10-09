@@ -6,12 +6,13 @@ import { ArrowUpRight, FilePenLine } from "lucide-react";
 import { useWorks } from "@/lib/use-works";
 import { modes, searchPublishedWorks, workDuration } from "@/lib/works";
 import { coverUrl } from "@/lib/music";
+import { FavoriteButton } from "./favorite-button";
 export function LocalLibrary({ tab }: { tab: string }) {
-  const { works, loaded, error } = useWorks();
+  const { works, loaded, error } = useWorks(tab === "favorites" ? "favorites" : "mine");
   const [filter, setFilter] = useState("全部");
   const list = works.filter(
     (w) =>
-      (tab === "history" ||
+      (tab === "history" || tab === "favorites" ||
         w.status === (tab === "drafts" ? "draft" : "published")) &&
       (filter === "全部" || modes[w.mode] === filter),
   );
@@ -22,8 +23,8 @@ export function LocalLibrary({ tab }: { tab: string }) {
           ? "这里的作品尚未发布。继续创作，或打开已完成的草稿进行发布。"
           : tab === "history"
             ? "每一次创作，都保存在这里。"
-            : "已发布的作品会显示在本地作品广场。"}{" "}
-        当前作品仅保存在此浏览器。
+            : tab === "favorites" ? "收藏的作品会保存在你的账号中。" : "已发布的作品会显示在作品广场。"}{" "}
+        作品由服务器保存，未发布草稿仅本人可见。
       </p>
       <div className="pills">
         {["全部", ...Object.values(modes)].map((m) => (
@@ -88,6 +89,7 @@ export function LocalLibrary({ tab }: { tab: string }) {
               <time dateTime={w.updatedAt}>
                 {new Date(w.updatedAt).toLocaleDateString("zh-CN")}
               </time>
+              {tab === "favorites" && <FavoriteButton id={w.id} />}
               <Link
                 className="button secondary small"
                 href={w.ready ? `/result?id=${w.id}` : `/create?draft=${w.id}`}
@@ -106,14 +108,15 @@ export function LocalLibrary({ tab }: { tab: string }) {
     </>
   );
 }
-export function PublishedWorks({ query = "" }: { query?: string }) {
-  const { works } = useWorks();
+export function PublishedWorks({ query = "", favorites = false }: { query?: string; favorites?: boolean }) {
+  const { works, error } = useWorks(favorites ? "favorites" : "public");
   const list = searchPublishedWorks(works, query);
+  if (error) return <p role="alert" className="form-error">{error}</p>;
   if (!list.length) return null;
   return (
     <section className="local-published">
       <div className="section-heading">
-        <h2>新发布 · 本地演示</h2>
+        <h2>{favorites ? "我收藏的作品" : "社区新发布"}</h2>
         <Link className="subtle-link" href="/profile">
           管理我的作品
         </Link>
@@ -134,6 +137,7 @@ export function PublishedWorks({ query = "" }: { query?: string }) {
               {w.description || `${w.genre} / ${w.mood}`}
             </p>
             <div className="inspiration-card-footer">
+              <FavoriteButton id={w.id} />
               <Link href={`/result?id=${w.id}`} className="subtle-link">
                 查看作品
               </Link>

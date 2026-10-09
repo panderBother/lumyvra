@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Heart,
   Share2,
   Download,
   Copy,
@@ -17,8 +16,8 @@ import {
   ListMusic,
 } from "lucide-react";
 import { lyrics } from "@/lib/music";
-export function TrackActions() {
-  const [liked, setLiked] = useState(false);
+import { FavoriteButton } from "./favorite-button";
+export function TrackActions({ id = "summer" }: { id?: string }) {
   const [message, setMessage] = useState("");
   async function share() {
     try {
@@ -37,14 +36,7 @@ export function TrackActions() {
         >
           <Download size={17} /> 下载
         </button>
-        <button
-          className={`button secondary ${liked ? "liked" : ""}`}
-          aria-pressed={liked}
-          onClick={() => setLiked(!liked)}
-        >
-          <Heart size={17} fill={liked ? "currentColor" : "none"} />
-          {liked ? "已收藏" : "收藏"}
-        </button>
+        <FavoriteButton id={id} />
         <button className="button secondary" onClick={share}>
           <Share2 size={17} /> 分享
         </button>
