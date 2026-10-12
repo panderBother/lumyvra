@@ -48,12 +48,14 @@ export function CreatorEntry({
   return (
     <Creator
       key={source?.id ?? `${mode}:${prompt}:${genre}:${mood}`}
-      initialMode={source?.mode ?? mode}
-      initialPrompt={source?.prompt ?? prompt}
+      initialMode={mode === "lyrics" && source?.mode === "words" ? "lyrics" : source?.mode ?? mode}
+      initialPrompt={mode === "lyrics" && source?.mode === "words" && "lyrics" in source ? source.lyrics : source?.prompt ?? prompt}
       initialGenre={source?.genre ?? genre}
       initialMood={source?.mood ?? mood}
       initialSeconds={source?.seconds}
       initialCover={source?.cover}
+      initialStylePrompt={source && "stylePrompt" in source ? source.stylePrompt : undefined}
+      initialRevision={draft && source && "revision" in source ? source.revision : undefined}
       draftId={draft}
       sourceId={draft ? source?.sourceId : source?.id}
       sourceTitle={draft ? source?.sourceTitle : source?.title}

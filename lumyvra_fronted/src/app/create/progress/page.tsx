@@ -1,5 +1,5 @@
 import { GenerationProgress } from "@/components/generation-progress";
-export const metadata = { title: "正在生成音乐" };
+export const metadata = { title: "创作进度" };
 export default async function ProgressPage({
   searchParams,
 }: {

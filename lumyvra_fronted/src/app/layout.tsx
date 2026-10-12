@@ -7,6 +7,8 @@ import "./music-landing.css";
 import "./studio-theme.css";
 import "./campaign.css";
 import "./login-scene.css";
+import "./music-generation.css";
+import "./published-player.css";
 export const metadata: Metadata = {
   title: { default: "Lumyvra · 让灵感成为音乐", template: "%s · Lumyvra" },
   description:

@@ -198,7 +198,9 @@ func (s *Server) googleCallback(w http.ResponseWriter, r *http.Request) {
 		internal(w, err)
 		return
 	}
-	if err = s.session(w, r, user, false); err != nil {
+	// Google sign-in remembers this browser using the existing 30-day local
+	// session. Provider access tokens are not stored in the browser.
+	if err = s.session(w, r, user, true); err != nil {
 		internal(w, err)
 		return
 	}

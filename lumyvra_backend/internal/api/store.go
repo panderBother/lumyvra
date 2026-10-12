@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS favorites (user_id TEXT NOT NULL REFERENCES users(id)
 CREATE TABLE IF NOT EXISTS oauth_identities (provider TEXT NOT NULL, subject TEXT NOT NULL, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, PRIMARY KEY(provider,subject));
 CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, browser TEXT NOT NULL, verifier TEXT NOT NULL, next TEXT NOT NULL, expires INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS registration_codes (email TEXT PRIMARY KEY, salt TEXT NOT NULL, code_hash TEXT NOT NULL, expires INTEGER NOT NULL, sent_at INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, ready INTEGER NOT NULL DEFAULT 0, window_start INTEGER NOT NULL, send_count INTEGER NOT NULL);
-PRAGMA user_version = 3;
+CREATE TABLE IF NOT EXISTS song_versions (id TEXT PRIMARY KEY, work_id TEXT NOT NULL REFERENCES works(id) ON DELETE CASCADE, owner_id TEXT NOT NULL REFERENCES users(id), file_name TEXT NOT NULL, data TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS versions_work ON song_versions(work_id);
+PRAGMA user_version = 4;
 `
 
 func OpenDatabase(path string) (*sql.DB, error) {

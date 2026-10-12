@@ -1,0 +1,5 @@
+# Isolated offline speech-resynthesis experiments; not inference server dependencies.
+pyworld==0.3.5
+numpy==1.26.4
+scipy==1.14.1
+soundfile==0.13.1

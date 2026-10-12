@@ -1,0 +1,175 @@
+.song-player { margin-block: 20px; padding: 24px; }
+.song-player h2 { margin-top: 0; }
+.song-player audio { display: block; width: 100%; margin-block: 16px; }
+.song-versions { margin-top: 24px; }
+.version-options { display: flex; flex-wrap: wrap; gap: 8px; max-height: 240px; overflow: auto; }
+.song-versions .lyrics-panel { margin-block: 16px; }
+.song-versions details { margin-top: 16px; }
+.song-versions details p { overflow-wrap: anywhere; }
+.creator-form .custom-duration textarea { display: block; width: 100%; margin-top: 10px; resize: vertical; }
+.creator-mode-description {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 18px 0 28px;
+  text-wrap: pretty;
+}
+.generation-stage {
+  max-width: 800px;
+  padding-top: 8px;
+}
+.generation-mode-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--acid);
+  font-size: 12px;
+  letter-spacing: .08em;
+}
+.generation-mode-label > span { color: var(--line); }
+.generation-stage h1 {
+  margin: 16px 0 12px;
+  font-size: clamp(25px, 3vw, 36px);
+  font-weight: 550;
+  letter-spacing: -.045em;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+.generation-stage > .generation-description {
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 540px;
+  margin-inline: auto;
+  text-wrap: pretty;
+}
+.generation-live-status {
+  min-height: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+.generation-live-status p { margin: 0; color: var(--text); }
+.generation-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--muted);
+  border-radius: 50%;
+  margin: 0 9px 2px 0;
+}
+.generation-status-dot.is-active { background: var(--acid); }
+.generation-elapsed { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+.generation-playground { max-width: 600px; margin: 0 auto 16px; }
+.particle-surface {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: clamp(240px, 30vw, 280px);
+  background: transparent;
+  padding: 0;
+  cursor: crosshair;
+  border-radius: 8px;
+  isolation: isolate;
+  touch-action: pan-y;
+}
+.particle-surface:disabled { opacity: 1; cursor: default; }
+.particle-surface canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.particle-core {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 96px; height: 96px;
+  border: 1px solid color-mix(in srgb, var(--acid) 24%, transparent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--acid);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  box-shadow: 0 0 42px color-mix(in srgb, var(--acid) 5%, transparent);
+  pointer-events: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.particle-core > span { font-size: 10px; letter-spacing: .08em; color: var(--muted); }
+.particle-surface:hover .particle-core,
+.particle-surface:focus-visible .particle-core {
+  border-color: color-mix(in srgb, var(--acid) 60%, transparent);
+  box-shadow: 0 0 56px color-mix(in srgb, var(--acid) 10%, transparent);
+}
+.particle-surface:active .particle-core { border-color: var(--acid); }
+.particle-toolbar {
+  min-height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.particle-toolbar > span,
+.generation-motion-toggle { display: inline-flex; align-items: center; gap: 7px; }
+.generation-motion-toggle {
+  padding: 8px;
+  min-height: 44px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: transparent;
+  color: var(--muted);
+}
+.generation-motion-toggle:hover { color: var(--acid); background: var(--panel); }
+.generation-stage .generation-steps {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--step-count), minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+}
+.generation-stage .generation-steps:before { content: none; }
+.generation-steps > li { position: relative; min-width: 0; color: var(--muted); }
+.generation-steps > li:not(:last-child):after {
+  content: "";
+  position: absolute;
+  height: 1px;
+  width: calc(100% - 40px);
+  top: 18px;
+  left: calc(50% + 20px);
+  background: var(--line);
+}
+.generation-stage .generation-steps span { width: 38px; height: 38px; border-width: 4px; }
+.generation-stage .generation-steps p { margin: 10px 4px 0; font-size: 12px; line-height: 1.5; text-wrap: pretty; }
+.generation-steps [aria-current="step"] { color: var(--text); }
+.generation-steps [aria-current="step"] > span {
+  color: var(--acid);
+  background: var(--panel-raised);
+  outline: 1px solid color-mix(in srgb, var(--acid) 50%, transparent);
+  outline-offset: 1px;
+}
+.generation-stage .progress-track { margin: 26px 0 20px; height: 2px; background: var(--line); }
+.progress-track.is-indeterminate i { opacity: .65; animation: inference-travel 2.8s ease-in-out infinite alternate; }
+.generation-stage > .generation-persistence { font-size: 12px; color: var(--muted); text-wrap: pretty; }
+.generation-stage > .generation-quote { font-size: 11px !important; color: var(--muted); text-wrap: pretty; }
+.generation-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 24px; }
+.generation-actions .button { min-height: 44px; font-size: 13px; }
+@keyframes inference-travel { to { transform: translateX(258%); } }
+@media (max-width: 600px) {
+  .generation-stage { padding-inline: 0; }
+  .generation-stage h1 { margin-top: 14px; }
+  .generation-stage > .generation-description { font-size: 13px; }
+  .generation-live-status { margin-top: 16px; min-height: 52px; gap: 6px 12px; }
+  .generation-playground { margin-bottom: 18px; }
+  .particle-toolbar { gap: 12px; }
+  .generation-stage .generation-steps p { font-size: 10px; margin-inline: 2px; }
+  .generation-stage .generation-steps span { width: 34px; height: 34px; }
+  .generation-steps > li:not(:last-child):after { top: 16px; left: calc(50% + 18px); width: calc(100% - 36px); }
+  .generation-actions .button { flex: 1 1 145px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-track.is-indeterminate i { animation: none; }
+  .particle-core { transition: none; }
+}

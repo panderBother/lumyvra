@@ -83,7 +83,7 @@ export function InspirationGallery({ compact = false }: { compact?: boolean }) {
             <article className="inspiration-card" key={i.id}>
               <Link
                 className="inspiration-art"
-                href={i.local ? `/result?id=${i.id}` : `/player/${i.id}`}
+                href={`/player/${encodeURIComponent(i.id)}`}
                 aria-label={`查看${i.title}`}
               >
                 <Image

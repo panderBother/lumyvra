@@ -27,7 +27,7 @@ export default async function Create({
       </header>
       <CreatorEntry
         mode={["text", "lyrics", "words"].includes(mode ?? "") ? mode! : "text"}
-        prompt={typeof prompt === "string" ? prompt.slice(0, 500) : ""}
+        prompt={typeof prompt === "string" ? prompt.slice(0, mode === "lyrics" ? 4096 : 2000) : ""}
         genre={
           typeof genre === "string" &&
           [

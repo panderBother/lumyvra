@@ -7,6 +7,8 @@ import { useWork } from "@/lib/use-works";
 import { useUser } from "@/lib/use-api";
 import { editWork, publishWork } from "@/lib/server-works";
 import { FavoriteButton } from "./favorite-button";
+import { SongPlayer, SongVersions } from "./song-versions";
+import { PublishedWorkPlayer } from "./published-player";
 import {
   modes,
   workDuration,
@@ -32,6 +34,7 @@ export function LocalWorkDetail({ id }: { id: string }) {
         </Link>
       </div>
     );
+  if (work.status === "published") return <PublishedWorkPlayer key={work.id} work={work} />;
   return <WorkDetail key={work.id} work={work} />;
 }
 function WorkDetail({ work }: { work: Work }) {
@@ -72,15 +75,15 @@ function WorkDetail({ work }: { work: Work }) {
     <div className="container page-space local-result">
       <header className="collection-heading">
         <div className="page-heading">
-          <span className="eyebrow">{published ? "音乐作品" : "创作草稿"}</span>
+          <span className="eyebrow">{work.mode === "words" ? published ? "歌词作品" : "歌词草稿" : published ? "音乐作品" : "创作草稿"}</span>
           <h1>
             {published
-              ? "让这首歌，被听见。"
+              ? work.mode === "words" ? "让这些文字，被看见。" : "让这首歌，被听见。"
               : work.ready
-                ? "作品已就绪，给它一个名字。"
+                ? work.mode === "words" ? "歌词已写好，下一步由你决定。" : "作品已就绪，给它一个名字。"
                 : "灵感已保存，随时继续。"}
           </h1>
-          <p>{work.generationMode === "live" ? "作品与生成结果已保存到服务器。" : "演示生成 · 作品已保存到服务器，尚未生成真实音频。"}</p>
+          <p>{work.audioUrl ? "歌曲与候选版本已保存，可以试听并下载。" : work.generationMode === "live" && work.mode === "words" ? "歌词已生成并保存，继续创作可以为它生成歌曲。" : work.generationMode === "demo" || work.generationMode === "sample" ? "演示作品 · 尚未生成真实音频。" : "创作方案已保存，生成完成后可以试听完整歌曲。"}</p>
         </div>
         <Link
           className="text-cta"
@@ -117,32 +120,34 @@ function WorkDetail({ work }: { work: Work }) {
               <p>
                 {work.genre} / {work.mood} / {modes[work.mode]}
               </p>
-              <p>目标时长 {workDuration(work.seconds)}</p>
+              {work.mode !== "words" && <p>目标时长 {workDuration(work.seconds)}</p>}
               {work.sourceTitle && <p>灵感来源：{work.sourceTitle}</p>}
               <p className="muted">
                 {!work.ready
                   ? "灵感已保存，完成生成后可预览并发布。"
                   : work.mode === "lyrics"
                     ? "保留你输入的歌词"
-                    : "以下为演示歌词，尚未生成真实歌曲"}
+                    : work.generationMode === "live" ? "歌词与生成版本分别保存" : "以下为演示歌词，尚未生成真实歌曲"}
               </p>
             </div>
           </div>
-          {work.ready ? (
+          {own && <SongVersions work={work} />}
+          {!own && work.audioUrl && <SongPlayer audioUrl={work.audioUrl} />}
+          {work.ready && (!own || !work.currentVersionId) ? (
             <section className="lyrics-panel panel">
-              <h2>歌词{work.mode === "lyrics" ? "" : "示例"}</h2>
+              <h2>歌词{work.generationMode === "demo" && work.mode !== "lyrics" ? "示例" : ""}</h2>
               <p className="preserve-lines">{work.lyrics}</p>
             </section>
-          ) : (
+          ) : !work.ready ? (
             <section className="lyrics-panel panel">
               <h2>等待生成</h2>
               <p>
-                这份草稿保存了你的灵感和创作参数。点击「继续创作」完成演示生成后，再为作品命名并发布。
+                {work.mode === "words" ? "这份草稿保存了歌词主题和写作参数。点击「继续创作」生成歌词，再阅读并选择版本。" : "这份草稿保存了你的灵感和创作参数。点击「继续创作」生成歌曲，再试听并选择版本。"}
               </p>
               <Link href={`/create/progress?id=${work.id}&mode=${work.mode}`} className="text-cta">查看生成任务状态 →</Link>
             </section>
-          )}
-          {work.prompt && <details className="work-prompt-detail" open>
+          ) : null}
+          {work.prompt && <details className="work-prompt-detail">
             <summary>这次创作的灵感</summary>
             <p className="preserve-lines">{work.prompt}</p>
           </details>}

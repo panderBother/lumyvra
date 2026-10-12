@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { readAPI, readWorkPages, DATA_EVENT, type User } from "./api";
+import { api, readAPI, readWorkPages, DATA_EVENT, type User, type MusicConfig } from "./api";
 
 export function useAPI<T>(path: string | null, allPages = false) {
   const [state, setState] = useState<{ path: string | null; data?: T; loaded: boolean; error: string }>({ path, loaded: false, error: "" });
@@ -29,4 +29,25 @@ export function useAPI<T>(path: string | null, allPages = false) {
 export function useUser() {
   const state = useAPI<{ user: User | null }>("/me");
   return { ...state, user: state.data?.user ?? null };
+}
+
+export function useMusicConfig() {
+  const [state, setState] = useState<{ data?: MusicConfig; error: string }>({ error: "" });
+  useEffect(() => {
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    async function load() {
+      try {
+        const data = await api<MusicConfig>("/config", { signal: controller.signal });
+        if (!controller.signal.aborted) setState({ data, error: "" });
+      } catch (error) {
+        if (!controller.signal.aborted) setState({ error: error instanceof Error ? error.message : "无法读取音乐引擎状态。" });
+      } finally {
+        if (!controller.signal.aborted) timer = setTimeout(load, 5000);
+      }
+    }
+    void load();
+    return () => { controller.abort(); clearTimeout(timer); };
+  }, []);
+  return state;
 }

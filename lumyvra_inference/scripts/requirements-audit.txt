@@ -1,0 +1,5 @@
+# Separate CPU diagnostic environment. Not dependencies of the music API.
+faster-whisper==1.2.1
+# PyAV 19 removed metadata_errors, used by faster-whisper 1.2.1.
+av==16.1.0
+opencc-python-reimplemented==0.1.7

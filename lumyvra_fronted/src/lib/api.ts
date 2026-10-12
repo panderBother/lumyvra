@@ -1,5 +1,8 @@
+import type { WorkInput } from "./works";
+
 export type User = { id: string; email: string; name: string; createdAt: string };
-export type GenerationJob = { id: string; workId: string; status: "queued" | "running" | "succeeded" | "failed" | "cancelled"; progress: number; provider: string; error?: string };
+export type GenerationJob = { id: string; workId: string; status: "queued" | "running" | "cancelling" | "succeeded" | "failed" | "cancelled"; progress: number; provider: string; input?: WorkInput; error?: string; errorCode?: string; stage?: string; startedAt?: string; createdAt?: string; versionId?: string };
+export type MusicConfig = { generationMode: "demo" | "local"; musicEngine: { status: string; available: boolean; producerAvailable: boolean; model: string; maxSeconds: number; issues?: string[]; qualityVerified: boolean } };
 
 export class APIError extends Error {
   constructor(message: string, public status: number) { super(message); }

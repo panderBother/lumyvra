@@ -1,0 +1,84 @@
+/* Published works use the existing immersive listening surface. */
+.published-player { min-height: calc(100svh - 82px); padding-bottom: 48px; }
+.published-player .player-backdrop img { object-fit: cover; }
+.published-player .player-top .icon-button { min-width: 44px; min-height: 44px; }
+.published-player .immersive-content { width: min(840px, calc(100% - 44px)); margin-top: 24px; }
+.published-player .immersive-content h1 {
+  max-width: 720px;
+  margin: 10px auto 0;
+  font-size: clamp(26px, 3.4vw, 42px);
+  line-height: 1.45;
+  letter-spacing: .02em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.published-player .player-artist { margin: 12px 0 0; font-size: 14px; }
+.published-lyrics {
+  height: clamp(210px, 30vh, 290px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin: 30px 0 0;
+  padding: 12px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--acid) 35%, transparent) transparent;
+  mask-image: linear-gradient(to bottom, transparent, black 12px, black calc(100% - 20px), transparent);
+}
+.published-lyrics p { margin: 8px 0; }
+.published-lyrics button {
+  padding: 6px 10px;
+  min-height: 44px;
+  background: transparent;
+  border-radius: 4px;
+  color: color-mix(in srgb, var(--text) 62%, transparent);
+  font-size: clamp(16px, 1.7vw, 22px);
+  line-height: 1.7;
+  letter-spacing: .04em;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.published-lyrics button:hover { color: var(--text); }
+.published-lyrics button.is-selected { color: var(--text); font-weight: 600; }
+.published-lyrics .lyric-section { color: var(--muted); font-size: 11px; letter-spacing: .12em; padding-top: 10px; }
+.published-lyrics .lyrics-empty { padding-block: 64px; color: var(--text); font-size: 18px; }
+.lyric-reading-note { color: var(--muted); font-size: 11px; margin: 10px 0 24px; }
+.published-playback { margin-top: 24px; }
+.published-playback audio { display: none; }
+.published-playback .seek-row { margin: 0; }
+.published-playback .seek-row input { width: 100%; min-height: 24px; accent-color: var(--acid); cursor: pointer; }
+.published-playback .seek-row input:disabled { cursor: default; opacity: .45; }
+.published-playback .seek-row > span { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+.published-playback .playback-controls { justify-content: center; gap: clamp(18px, 4vw, 44px); margin: 10px auto 0; }
+.published-playback .playback-controls .icon-button { min-width: 44px; min-height: 44px; color: var(--text); }
+.published-playback .playback-controls .icon-button:hover { color: var(--acid); }
+.published-playback .playback-controls .icon-button.liked { color: var(--acid); background: color-mix(in srgb, var(--acid) 12%, transparent); }
+.published-playback .playback-controls .round-play { width: 72px; height: 72px; flex-shrink: 0; }
+.published-playback .form-error { max-width: 540px; margin-inline: auto; }
+.player-unavailable { color: var(--muted); font-size: 13px; margin-top: 28px; }
+.published-player .track-actions { max-width: 500px; display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 28px; }
+.published-player .track-actions .button { min-height: 44px; padding-inline: 22px; }
+.published-player .action-message { font-size: 12px; overflow-wrap: anywhere; color: var(--muted); }
+.published-song-description { max-width: 580px; margin-inline: auto; color: var(--muted); font-size: 13px; text-wrap: pretty; }
+.published-playlist { margin: 24px auto 0; max-width: 580px; max-height: 240px; overflow: auto; text-align: left; background: var(--bg); padding: 16px 20px; border: 1px solid var(--line); border-radius: 8px; }
+.published-playlist h2 { font-size: 14px; margin: 0 0 12px; }
+.published-playlist a { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.published-playlist a > span { min-width: 0; overflow-wrap: anywhere; }
+.published-playlist small { color: var(--muted); flex-shrink: 0; }
+.published-playlist a[aria-current="page"] { color: var(--acid); }
+.published-player:fullscreen { overflow: auto; min-height: 100svh; background: var(--bg); }
+@media (max-width: 600px) {
+  .published-player { min-height: calc(100svh - 66px); padding-bottom: 28px; }
+  .published-player .player-top { padding: 18px 22px; }
+  .published-player .immersive-content { margin-top: 10px; }
+  .published-player .immersive-content h1 { font-size: 26px; }
+  .published-lyrics { margin-top: 24px; padding-inline: 4px; height: 230px; }
+  .published-playback .playback-controls { gap: 6px; }
+  .published-playback .playback-controls .round-play { width: 62px; height: 62px; }
+  .published-playback .playback-controls .icon-button svg { width: 19px; }
+  .published-player .track-actions { gap: 8px; }
+  .published-player .track-actions .button { padding-inline: 16px; }
+}
+@media (max-width: 360px) {
+  .published-playback .playback-controls { gap: 0; justify-content: space-between; }
+  .published-playback .playback-controls .round-play { width: 56px; height: 56px; }
+}
+@media (prefers-reduced-motion: reduce) { .published-player * { scroll-behavior: auto; } }

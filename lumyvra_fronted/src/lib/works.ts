@@ -11,8 +11,11 @@ export type WorkMode = keyof typeof modes;
 export type Work = {
   ownerId?: string;
   artist?: string;
-  generationMode?: "demo" | "sample" | "live";
+  generationMode?: "demo" | "sample" | "live" | "pending";
   audioUrl?: string;
+  stylePrompt?: string;
+  revision?: number;
+  currentVersionId?: string;
   id: string;
   title: string;
   description: string;
@@ -42,7 +45,9 @@ export type WorkInput = Pick<
   | "cover"
   | "sourceId"
   | "sourceTitle"
+  | "stylePrompt"
 >;
+export type SongVersion = { id: string; workId: string; kind: "audio" | "lyrics"; lyrics: string; caption: string; model: string; duration: number; audioUrl?: string; createdAt: string; input: WorkInput; reviewStatus: string };
 
 export function parseWorks(raw: string | null): Work[] {
   if (!raw) return [];

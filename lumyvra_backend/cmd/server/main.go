@@ -34,6 +34,7 @@ func main() {
 	}
 	defer db.Close()
 	app := api.New(db, api.Config{Origins: strings.Split(env("APP_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"), ","), SecureCookies: os.Getenv("COOKIE_SECURE") == "true",
+		GenerationMode: env("GENERATION_MODE", "local"), InferenceURL: env("INFERENCE_URL", "http://127.0.0.1:8090"), InferenceKey: os.Getenv("INFERENCE_API_KEY"), MediaDir: env("MEDIA_DIR", "media"),
 		GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"), GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"), GoogleRedirectURL: os.Getenv("GOOGLE_REDIRECT_URL"),
 		SMTP: api.SMTPConfig{Host: os.Getenv("SMTP_HOST"), Port: env("SMTP_PORT", "587"), Username: os.Getenv("SMTP_USERNAME"), Password: os.Getenv("SMTP_PASSWORD"), From: os.Getenv("SMTP_FROM"), TLSMode: env("SMTP_TLS_MODE", "starttls")}})
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -47,7 +48,7 @@ func main() {
 		defer cancel()
 		_ = server.Shutdown(shutdown)
 	}()
-	slog.Info("Lumyvra backend ready", "address", server.Addr, "generation", "demo")
+	slog.Info("Lumyvra backend ready", "address", server.Addr, "generation", env("GENERATION_MODE", "local"))
 	if err = server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("http server", "error", err)
 		stop()

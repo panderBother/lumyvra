@@ -21,19 +21,24 @@ type Config struct {
 	Origins            []string
 	SecureCookies      bool
 	DemoDelay          time.Duration
+	GenerationMode     string
+	InferenceURL       string
+	InferenceKey       string
+	MediaDir           string
 	GoogleClientID     string
 	GoogleClientSecret string
 	GoogleRedirectURL  string
 	SMTP               SMTPConfig
 }
 type Server struct {
-	db         *sql.DB
-	cfg        Config
-	mutations  sync.Mutex
-	limiterMu  sync.Mutex
-	limits     map[string]limit
-	oauthHTTP  *http.Client
-	mailSender verificationSender
+	db            *sql.DB
+	cfg           Config
+	mutations     sync.Mutex
+	limiterMu     sync.Mutex
+	limits        map[string]limit
+	oauthHTTP     *http.Client
+	mailSender    verificationSender
+	inferenceHTTP *http.Client
 }
 type limit struct {
 	count int
@@ -42,10 +47,24 @@ type limit struct {
 type userKey struct{}
 
 func New(db *sql.DB, cfg Config) *Server {
+	if cfg.GenerationMode == "" {
+		cfg.GenerationMode = "local"
+		// Explicit short demo delays are retained for legacy demonstration tests.
+		if cfg.DemoDelay > 0 {
+			cfg.GenerationMode = "demo"
+		}
+	}
+	if cfg.InferenceURL == "" {
+		cfg.InferenceURL = "http://127.0.0.1:8090"
+	}
+	if cfg.MediaDir == "" {
+		cfg.MediaDir = "media"
+	}
 	if cfg.DemoDelay <= 0 {
 		cfg.DemoDelay = 3 * time.Second
 	}
 	s := &Server{db: db, cfg: cfg, limits: make(map[string]limit)}
+	s.inferenceHTTP = &http.Client{Timeout: 10 * time.Second, CheckRedirect: func(r *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
 	if cfg.SMTP.valid() {
 		s.mailSender = cfg.SMTP
 	}
@@ -110,9 +129,7 @@ func (s *Server) Handler() http.Handler {
 		}
 		jsonResponse(w, 200, map[string]string{"status": "ok"})
 	})
-	mux.HandleFunc("GET /api/config", func(w http.ResponseWriter, r *http.Request) {
-		jsonResponse(w, 200, map[string]any{"generationMode": "demo", "paymentsEnabled": false, "googleLoginEnabled": s.googleEnabled(), "googleLoginURL": s.googleLoginURL(), "genres": genres, "moods": moods})
-	})
+	mux.HandleFunc("GET /api/config", s.generationConfig)
 	mux.HandleFunc("POST /api/auth/register/code", s.sendRegistrationCode)
 	mux.HandleFunc("POST /api/auth/register", s.register)
 	mux.HandleFunc("POST /api/auth/login", s.login)
@@ -136,6 +153,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/works/{id}/job", s.require(s.latestJob))
 	mux.HandleFunc("GET /api/jobs/{id}", s.require(s.jobStatus))
 	mux.HandleFunc("POST /api/jobs/{id}/cancel", s.require(s.cancelJob))
+	mux.HandleFunc("GET /api/works/{id}/versions", s.require(s.listVersions))
+	mux.HandleFunc("POST /api/works/{id}/versions/{version}/adopt", s.require(s.adoptVersion))
+	mux.HandleFunc("GET /api/audio/{id}", s.serveAudio)
 	mux.HandleFunc("GET /api/me/favorites", s.require(s.listFavorites))
 	mux.HandleFunc("PUT /api/me/favorites/{id}", s.require(s.favorite))
 	mux.HandleFunc("DELETE /api/me/favorites/{id}", s.require(s.favorite))

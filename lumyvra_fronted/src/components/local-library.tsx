@@ -61,7 +61,7 @@ export function LocalLibrary({ tab }: { tab: string }) {
         <div className="local-work-list">
           {list.map((w) => (
             <article className="local-work-row" key={w.id}>
-              <Link href={`/result?id=${w.id}`}>
+              <Link href={w.status === "published" ? `/player/${encodeURIComponent(w.id)}` : `/result?id=${encodeURIComponent(w.id)}`}>
                 <Image
                   src={coverUrl(w.cover)}
                   alt={w.title}
@@ -70,7 +70,7 @@ export function LocalLibrary({ tab }: { tab: string }) {
                 />
               </Link>
               <div className="local-work-name">
-                <Link href={`/result?id=${w.id}`}>
+                <Link href={w.status === "published" ? `/player/${encodeURIComponent(w.id)}` : `/result?id=${encodeURIComponent(w.id)}`}>
                   <h3>{w.title}</h3>
                 </Link>
                 <p>
@@ -92,7 +92,7 @@ export function LocalLibrary({ tab }: { tab: string }) {
               {tab === "favorites" && <FavoriteButton id={w.id} />}
               <Link
                 className="button secondary small"
-                href={w.ready ? `/result?id=${w.id}` : `/create?draft=${w.id}`}
+                href={w.status === "published" ? `/player/${encodeURIComponent(w.id)}` : w.ready ? `/result?id=${encodeURIComponent(w.id)}` : `/create?draft=${encodeURIComponent(w.id)}`}
               >
                 {w.status === "published"
                   ? "查看作品"
@@ -124,7 +124,7 @@ export function PublishedWorks({ query = "", favorites = false }: { query?: stri
       <div className="inspiration-grid">
         {list.map((w) => (
           <article key={w.id} className="inspiration-card">
-            <Link href={`/result?id=${w.id}`} className="inspiration-art">
+            <Link href={`/player/${encodeURIComponent(w.id)}`} className="inspiration-art" aria-label={`播放 ${w.title}`}>
               <Image
                 src={coverUrl(w.cover)}
                 alt={w.title}
@@ -132,13 +132,13 @@ export function PublishedWorks({ query = "", favorites = false }: { query?: stri
                 sizes="(max-width:760px) 90vw, 30vw"
               />
             </Link>
-            <h3>{w.title}</h3>
+            <h3><Link href={`/player/${encodeURIComponent(w.id)}`}>{w.title}</Link></h3>
             <p className="inspiration-description">
               {w.description || `${w.genre} / ${w.mood}`}
             </p>
             <div className="inspiration-card-footer">
               <FavoriteButton id={w.id} />
-              <Link href={`/result?id=${w.id}`} className="subtle-link">
+              <Link href={`/player/${encodeURIComponent(w.id)}`} className="subtle-link">
                 查看作品
               </Link>
               {w.allowRemix && (

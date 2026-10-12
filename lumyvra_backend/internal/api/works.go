@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -27,6 +29,7 @@ func (s *Server) publicView(work Work, user *User) Work {
 	if user == nil || user.ID != work.OwnerID {
 		if !work.AllowRemix {
 			work.Prompt = ""
+			work.StylePrompt = ""
 			work.SourceID = ""
 			work.SourceTitle = ""
 		}
@@ -120,11 +123,15 @@ func (s *Server) listMine(w http.ResponseWriter, r *http.Request)   { s.list(w, 
 func (s *Server) listPublic(w http.ResponseWriter, r *http.Request) { s.list(w, r, false) }
 
 func validDraft(input DraftInput) bool {
-	return clean(input.Prompt, 500) && slices.Contains([]string{"text", "lyrics", "words"}, input.Mode) && slices.Contains(genres, input.Genre) && slices.Contains(moods, input.Mood) && slices.Contains(covers, input.Cover) && input.Seconds >= 30 && input.Seconds <= 300
+	maximum := 2000
+	if input.Mode == "lyrics" {
+		maximum = 4096
+	}
+	return clean(input.Prompt, maximum) && len([]rune(input.StylePrompt)) <= 512 && slices.Contains([]string{"text", "lyrics", "words"}, input.Mode) && !(input.Mode != "text" && input.Genre == "纯音乐") && slices.Contains(genres, input.Genre) && slices.Contains(moods, input.Mood) && slices.Contains(covers, input.Cover) && input.Seconds >= 30 && input.Seconds <= 300
 }
 func (s *Server) activeJob(id string) bool {
 	var count int
-	err := s.db.QueryRow("SELECT count(*) FROM jobs WHERE work_id=? AND status IN ('queued','running')", id).Scan(&count)
+	err := s.db.QueryRow("SELECT count(*) FROM jobs WHERE work_id=? AND status IN ('queued','running','cancelling')", id).Scan(&count)
 	return err != nil || count > 0
 }
 func (s *Server) owner(w http.ResponseWriter, r *http.Request) (Work, bool) {
@@ -147,22 +154,26 @@ func (s *Server) draft(w http.ResponseWriter, r *http.Request, editing bool) {
 		return
 	}
 	if !validDraft(input) {
-		fail(w, 400, "validation", "请检查灵感、风格、情绪、封面及 30–300 秒时长。")
+		fail(w, 400, "validation", "请检查灵感、歌词、制作描述、风格及 30–300 秒时长；生成歌词或歌词演唱需要选择演唱风格。")
 		return
 	}
 	input.Prompt = strings.TrimSpace(input.Prompt)
 	s.mutations.Lock()
 	defer s.mutations.Unlock()
 	user := currentUser(r)
-	work := Work{ID: "work-" + token()[:24], OwnerID: user.ID, Artist: user.Name, Title: string([]rune(input.Prompt)[:min(18, len([]rune(input.Prompt)))]), Status: "draft", CreatedAt: now(), GenerationMode: "demo"}
+	work := Work{ID: "work-" + token()[:24], OwnerID: user.ID, Artist: user.Name, Title: string([]rune(input.Prompt)[:min(18, len([]rune(input.Prompt)))]), Status: "draft", CreatedAt: now(), GenerationMode: "pending"}
 	if editing {
 		var ok bool
 		work, ok = s.owner(w, r)
 		if !ok {
 			return
 		}
-		if work.Status != "draft" || s.activeJob(work.ID) {
-			fail(w, 409, "work_locked", "已发布或正在生成的作品暂不可修改。")
+		if work.Status != "draft" || (s.cfg.GenerationMode == "demo" && s.activeJob(work.ID)) {
+			fail(w, 409, "work_locked", "已发布作品或演示中的草稿暂不可修改。")
+			return
+		}
+		if input.Revision != nil && *input.Revision != work.Revision {
+			fail(w, 409, "revision_conflict", "这份草稿在其他页面已修改，请刷新后合并内容。")
 			return
 		}
 	} else {
@@ -191,12 +202,13 @@ func (s *Server) draft(w http.ResponseWriter, r *http.Request, editing bool) {
 		}
 	}
 	unchanged := work.Prompt == input.Prompt && work.Mode == input.Mode && work.Genre == input.Genre && work.Mood == input.Mood && work.Seconds == input.Seconds && work.Cover == input.Cover
-	if !unchanged || input.Regenerate {
+	if (!unchanged || input.Regenerate) && s.cfg.GenerationMode == "demo" {
 		work.Ready = false
 		work.Lyrics = ""
 		work.AudioURL = ""
 	}
 	work.Prompt = input.Prompt
+	work.StylePrompt = strings.TrimSpace(input.StylePrompt)
 	work.Mode = input.Mode
 	work.Genre = input.Genre
 	work.Mood = input.Mood
@@ -205,6 +217,7 @@ func (s *Server) draft(w http.ResponseWriter, r *http.Request, editing bool) {
 	work.SourceID = sourceID
 	work.SourceTitle = sourceTitle
 	work.UpdatedAt = now()
+	work.Revision++
 	if err := saveWork(s.db, work); err != nil {
 		internal(w, err)
 		return
@@ -250,6 +263,24 @@ func (s *Server) metadata(w http.ResponseWriter, r *http.Request, publish bool) 
 	if publish && !work.Ready {
 		fail(w, 409, "not_ready", "请先完成生成，再发布作品。")
 		return
+	}
+	if publish && work.GenerationMode == "live" {
+		version, err := getVersion(s.db, work.CurrentVersion)
+		if err != nil || version.WorkID != work.ID || version.OwnerID != work.OwnerID {
+			fail(w, 409, "version_missing", "请先采用一个完整生成的版本，再发布作品。")
+			return
+		}
+		if version.Kind == "audio" {
+			info, err := os.Stat(filepath.Join(s.cfg.MediaDir, version.FileName))
+			if err != nil || info.Size() != version.Bytes {
+				fail(w, 409, "asset_missing", "已采用版本的音频缺失或损坏，请恢复文件后再发布。")
+				return
+			}
+		}
+		// Public remix inputs describe the adopted result, not a newer unfinished draft.
+		work.Prompt, work.StylePrompt, work.Mode = version.Input.Prompt, version.Input.StylePrompt, version.Input.Mode
+		work.Genre, work.Mood, work.Seconds = version.Input.Genre, version.Input.Mood, version.Input.Seconds
+		work.SourceID, work.SourceTitle = version.Input.SourceID, version.Input.SourceTitle
 	}
 	work.Title = strings.TrimSpace(input.Title)
 	work.Description = strings.TrimSpace(input.Description)

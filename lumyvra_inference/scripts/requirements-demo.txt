@@ -1,0 +1,6 @@
+# Publisher's public demo client in .venv-demo, isolated from the music API.
+gradio_client==2.7.2
+python-dotenv>=1.0,<2
+numpy==1.26.4
+soundfile==0.13.1
+pydantic>=2.10,<3

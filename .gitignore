@@ -31,3 +31,19 @@ __tests__/
 *_test.go
 *.test.*
 *.spec.*
+
+# Local Python runtime, upstream sources, weights and generated assets.
+__pycache__/
+*.egg-info/
+*.py[cod]
+.venv/
+.venv-*/
+.pytest_cache/
+.ruff_cache/
+lumyvra_inference/vendor/
+lumyvra_inference/checkpoints/
+lumyvra_inference/data/
+lumyvra_inference/.cache/
+lumyvra_backend/media/
+# Local songwriting skill/research; runtime guidance is in music_service/references.py.
+lumyvra_inference/skills/

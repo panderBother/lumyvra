@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Expand } from "lucide-react";
-import { notFound } from "next/navigation";
 import { tracks, lyrics, coverUrl } from "@/lib/music";
 import { Playback, TrackActions } from "@/components/track-controls";
+import { PublishedPlayer } from "@/components/published-player";
 export function generateStaticParams() {
   return tracks.map((t) => ({ id: t.id }));
 }
@@ -13,7 +13,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return { title: tracks.find((t) => t.id === id)?.title ?? "作品详情" };
+  return { title: tracks.find((t) => t.id === id)?.title ?? "作品播放" };
 }
 export default async function Player({
   params,
@@ -22,7 +22,7 @@ export default async function Player({
 }) {
   const { id } = await params;
   const track = tracks.find((t) => t.id === id);
-  if (!track) notFound();
+  if (!track) return <PublishedPlayer id={id} />;
   return (
     <div className="player-page">
       <div className="player-backdrop">
