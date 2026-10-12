@@ -25,6 +25,8 @@ service-account*.json
 
 # Keep project notes and tests local.
 *.md
+# Publish the project showcase requested by the user; other notes stay local.
+!/README.md
 docs/
 tests/
 __tests__/
